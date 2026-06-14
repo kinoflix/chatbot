@@ -1,14 +1,24 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // Qovluq yollarını düzgün idarə etmək üçün mütləqdir
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Render-də təyin edəcəyimiz API açarı və Groq-un rəsmi linki
+// 1. Serverə deyirik ki, bütün statik faylları (css, js, şəkillər) "public" qovluğundan oxusun
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 2. Ana səhifəyə daxil olduqda "public" qovluğunun içindəki index.html-i ekrana gətir
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Groq-dan aldığın pulsuz API açarı və rəsmi link
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+// 3. Çat otağından və ya botdan gələn mesajları qəbul edən əsas API linkimiz
 app.post('/api/chat', async (req, res) => {
     const userText = req.body.text;
 
@@ -17,7 +27,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     try {
-        // Heç bir paket yükləmədən birbaşa Groq API-na sorğu göndəririk
+        // Groq API-na birbaşa fetch sorğusu göndəririk
         const response = await fetch(GROQ_API_URL, {
             method: "POST",
             headers: {
@@ -25,7 +35,7 @@ app.post('/api/chat', async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama3-8b-8192", // Tam pulsuz, donmayan, ildırım sürətli model
+                model: "llama3-8b-8192", // Sürətli və limitsizə yaxın modelimiz
                 messages: [
                     {
                         role: "system",
@@ -56,4 +66,4 @@ app.post('/api/chat', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server ${PORT} portunda aktivdir.`));
+app.listen(PORT, () => console.log(`Serverimiz ${PORT} portunda uğurla işləyir.`));

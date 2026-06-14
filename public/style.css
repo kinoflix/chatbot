@@ -20,6 +20,8 @@ body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow: hidden;
     padding: 20px;
+    /* YENİLƏNDİ: Əgər gələcəkdə qlobal fon da rejimlərlə dəyişərsə, keçid animasiyalı olacaq */
+    transition: background 0.5s ease;
 }
 
 /* Sabit Və Həmişə Açıq Çat Pəncərəsi */
@@ -35,6 +37,9 @@ body {
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    
+    /* YENİLƏNDİ: Gecə/gündüz rejim keçidləri yumşaldıldı */
+    transition: background-color 0.5s ease, border-color 0.5s ease;
 }
 
 /* Tema Keçid Rəngləri */
@@ -55,6 +60,8 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    /* YENİLƏNDİ: Keçid zamanı alt xətt süzülsün */
+    transition: border-color 0.5s ease;
 }
 .dark-mode #chat-header { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
 
@@ -73,7 +80,7 @@ body {
     color: white;
     box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 
-        /* İlkin vəziyyətdə əyri durur */
+    /* İlkin vəziyyətdə əyri durur */
     transform: rotate(3deg); 
     transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
     overflow: visible !important; 
@@ -94,6 +101,8 @@ body {
     border: 2px solid #fff;
     border-radius: 50%;
     animation: pulse 2s infinite ease-in-out;
+    /* YENİLƏNDİ: Yaşıl nöqtənin ətrafındakı haşiyə yumşaq dəyişsin */
+    transition: border-color 0.5s ease;
 }
 .dark-mode .online-dot { border-color: #0f172a; }
 
@@ -103,7 +112,14 @@ body {
     100% { transform: scale(0.95); opacity: 0.6; }
 }
 
-.bot-title { display: block; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+.bot-title { 
+    display: block; 
+    font-weight: 700; 
+    font-size: 16px; 
+    letter-spacing: -0.3px; 
+    /* YENİLƏNDİ */
+    transition: color 0.5s ease;
+}
 .light-mode .bot-title { color: #1f2937; }
 .dark-mode .bot-title { color: #f4f4f5; }
 
@@ -121,7 +137,8 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    /* YENİLƏNDİ: Düymələrin rəng keçidləri yumşaldıldı */
+    transition: background-color 0.5s ease, color 0.5s ease, transform 0.2s ease;
 }
 .light-mode #chat-clear-btn, .light-mode #chat-theme-btn { color: #4b5563; }
 .dark-mode #chat-clear-btn, .dark-mode #chat-theme-btn { color: #a1a1aa; }
@@ -129,6 +146,14 @@ body {
 #chat-clear-btn:hover { color: #ef4444 !important; }
 .light-mode #chat-clear-btn:hover, .light-mode #chat-theme-btn:hover { background: rgba(0,0,0,0.05); }
 .dark-mode #chat-clear-btn:hover, .dark-mode #chat-theme-btn:hover { background: rgba(255,255,255,0.05); }
+
+/* YENİLƏNDİ: Sabit səhifədə rejim dəyişmə İkonuna fırlanma animasiyası əlavə edildi */
+#chat-theme-btn svg {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#chat-theme-btn:active svg {
+    transform: rotate(180deg) scale(1.1);
+}
 
 /* Messages Box */
 #chat-messages {
@@ -156,7 +181,12 @@ body {
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.bot-message { align-self: flex-start; border-radius: 18px 18px 18px 4px; }
+.bot-message { 
+    align-self: flex-start; 
+    border-radius: 18px 18px 18px 4px; 
+    /* YENİLƏNDİ: Köhnə bot mesajları süzülərək rəng dəyişsin */
+    transition: background-color 0.5s ease, color 0.5s ease;
+}
 .light-mode .bot-message { background: rgba(0, 0, 0, 0.04); color: #1f2937; }
 .dark-mode .bot-message { background: rgba(255, 255, 255, 0.05); color: #e4e4e7; }
 
@@ -174,7 +204,13 @@ body {
 .typing-dots { display: flex; align-items: center; gap: 4px; }
 .typing-dot { width: 6px; height: 6px; background: var(--chat-primary); border-radius: 50%; display: inline-block; animation: chatBounce 1.4s infinite ease-in-out; }
 @keyframes chatBounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.3; } 40% { transform: scale(1); opacity: 1; } }
-.indicator-text { font-size: 11px; margin-left: 6px; font-weight: 500; }
+.indicator-text { 
+    font-size: 11px; 
+    margin-left: 6px; 
+    font-weight: 500; 
+    /* YENİLƏNDİ */
+    transition: color 0.5s ease;
+}
 .light-mode .indicator-text { color: #6b7280; }
 .dark-mode .indicator-text { color: #9ca3af; }
 
@@ -185,11 +221,22 @@ body {
     flex-direction: column;
     gap: 14px;
     border-top: 1px solid rgba(0, 0, 0, 0.04);
+    /* YENİLƏNDİ */
+    transition: border-color 0.5s ease;
 }
 .dark-mode #chat-footer { border-top: 1px solid rgba(255, 255, 255, 0.05); }
 
 #chat-input-area { display: flex; gap: 8px; position: relative; }
-#chat-input { flex: 1; padding: 14px 54px 14px 18px; border: 1px solid transparent; border-radius: 16px; outline: none; font-size: 14.5px; transition: all 0.3s; }
+#chat-input { 
+    flex: 1; 
+    padding: 14px 54px 14px 18px; 
+    border: 1px solid transparent; 
+    border-radius: 16px; 
+    outline: none; 
+    font-size: 14.5px; 
+    /* YENİLƏNDİ: Fokus və rejim dəyişməsi tam sinxronlaşdırıldı */
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.3s ease, box-shadow 0.3s ease; 
+}
 .light-mode #chat-input { background: rgba(0,0,0,0.04); color: #111827; }
 .dark-mode #chat-input { background: rgba(255,255,255,0.05); color: #f4f4f5; }
 .light-mode #chat-input:focus { border-color: var(--chat-primary); background: #fff; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
@@ -204,11 +251,20 @@ body {
 .quick-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .quick-chips::-webkit-scrollbar { height: 2px; }
 .quick-chips::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.2); }
-.chip-btn { white-space: nowrap; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+.chip-btn { 
+    white-space: nowrap; 
+    padding: 8px 14px; 
+    font-size: 12px; 
+    font-weight: 600; 
+    border-radius: 20px; 
+    cursor: pointer; 
+    /* YENİLƏNDİ: Çiplərin rejim rəngləri süzülsün */
+    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease; 
+}
 .light-mode .chip-btn { background: #fff; border: 1px solid #e4e4e7; color: #4b5563; }
 .dark-mode .chip-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); color: #d4d4d8; }
-.light-mode .chip-btn:hover { background: #f4f4f5; border-color: var(--chat-primary); color: var(--chat-primary); }
-.dark-mode .chip-btn:hover { background: rgba(99,102,241,0.1); border-color: var(--chat-primary); color: #fff; }
+.light-mode .chip-btn:hover { background: #f4f4f5; border-color: var(--chat-primary); color: var(--chat-primary) !important; transition: all 0.2s ease; }
+.dark-mode .chip-btn:hover { background: rgba(99,102,241,0.1); border-color: var(--chat-primary); color: #fff !important; transition: all 0.2s ease; }
 
 /* Responsive For Mobile Screens */
 @media (max-width: 640px) {

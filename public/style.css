@@ -72,6 +72,16 @@ body {
     justify-content: center;
     color: white;
     box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+
+        /* İlkin vəziyyətdə əyri durur */
+    transform: rotate(3deg); 
+    transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    overflow: visible !important; 
+}
+
+/* YALNIZ avatara siçanla toxunanda (hover edəndə) düzəlir */
+.avatar:hover {
+    transform: rotate(0deg) scale(1.05);
 }
 
 .online-dot {

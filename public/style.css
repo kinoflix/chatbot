@@ -1,76 +1,57 @@
 body {
-    background-color: #121212;
-    color: #ffffff;
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+    font-family: 'Inter', sans-serif;
 }
-.chat-container {
-    width: 100%;
-    max-width: 450px;
-    height: 85vh;
-    background-color: #1e1e1e;
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+
+.glass-panel {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
-.chat-header {
-    background-color: #252525;
-    padding: 15px;
-    text-align: center;
-    border-bottom: 1px solid #2d2d2d;
+
+/* Mesaj köpükcüklərinin animasiyası */
+.message-bubble {
+    max-width: 85%;
+    animation: slideIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-.chat-box {
-    flex: 1;
-    padding: 15px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(15px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
-.message {
-    padding: 10px 14px;
-    border-radius: 12px;
-    max-width: 75%;
-    font-size: 0.95rem;
-    line-height: 1.4;
+
+/* KINOFLIX AI Cavab balonu */
+.ai-bubble {
+    border-bottom-left-radius: 4px;
+    background: rgba(30, 41, 59, 0.7);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
-.user-message {
-    background-color: #007acc;
-    align-self: flex-end;
-    border-bottom-right-radius: 2px;
-}
-.ai-message {
-    background-color: #2d2d2d;
-    align-self: flex-start;
-    border-bottom-left-radius: 2px;
-}
-.chat-input-area {
-    display: flex;
-    padding: 12px;
-    background-color: #252525;
-    gap: 8px;
-    border-top: 1px solid #2d2d2d;
-}
-input {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background-color: #333333;
+
+/* İstifadəçi Balonu */
+.user-bubble {
+    border-bottom-right-radius: 4px;
+    background: #6366f1;
     color: white;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
 }
-button {
-    padding: 12px 18px;
-    background-color: #007acc;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
+
+/* Üç nöqtə yazır animasiyası */
+.typing-dot {
+    width: 6px;
+    height: 6px;
+    background: #6366f1;
+    border-radius: 50%;
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out;
 }
+
+@keyframes bounce {
+    0%, 80%, 100’% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Skrol hissəsinin gözəlləşdirilməsi */
+.custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }

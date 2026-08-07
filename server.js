@@ -6,11 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Public qovluğundakı statik faylları (index.html, css, js) xidmət et
 app.use(express.static(path.join(__dirname, 'public')));
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -23,63 +21,57 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: "Mətn daxil edilməyib." });
     }
 
-    if (!OPENROUTER_API_KEY) {
-        console.error("XƏTA: OPENROUTER_API_KEY mühit dəyişəni təyin edilməyib!");
+    if (!GEMINI_API_KEY) {
+        console.error("XƏTA: GEMINI_API_KEY mühit dəyişəni təyin edilməyib!");
         return res.json({ 
-            reply: "Server xətası: OPENROUTER_API_KEY mühit dəyişəni (Environment Variable) tapılmadı." 
+            reply: "Server xətası: GEMINI_API_KEY mühit dəyişəni (Environment Variable) tapılmadı." 
         });
     }
+
+    // Google Gemini 2.0 Flash rəsmi API endpoint-i
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://kinoflix.onrender.com",
-                "X-Title": "KINOFLIX AI"
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                // OpenRouter-də pulsuz və Azərbaycan dilini mükəmməl bilən model:
-                model: "openrouter/free",
-                messages: [
-                    {
-                        role: "system",
-                        content: `Sən KINOFLIX saytının rəsmi, nəzakətli və kinoman AI assistentisən.
+                systemInstruction: {
+                    parts: [
+                        {
+                            text: `Sən KINOFLIX saytının rəsmi, nəzakətli və kinoman AI assistentisən.
 
-ƏSAS DİL VƏ DAVRANIŞ QAYDALARI:
-
-1. "XOŞ GƏLDİNİZ" MESAJI QAYDASI:
-   - "KINOFLIX-ə xoş gəldiniz!" cümləsini YALNIZ və YALNIZ istifadəçi ilk dəfə "Salam" deyəndə işlət.
-   - İstifadəçi film, aktyor, serial və ya başqa sual verdikdə HƏR DƏFƏ təzədən "xoş gəldiniz" YAZMA! Birbaşa suala cavab ver.
-
-2. BREND VƏ QRAMMATİKA QAYDASI:
-   - Saytın adı "KINOFLIX"-dir.
-   - Yönlük hal şəkilçisini doğru yaz: "KINOFLIX-ə" (Əsla "KINOFLIX-dən xoş gəldin" yazma).
-   - Bütün cavabları təbii, axıcı və səlis Azərbaycan dilində ver ("Siz" deyə müraciət et).
-   - "Təmin edir", "tövsiyə olunandır" kimi mexaniki və süni ifadələr işlətmə.`
-                    },
+ƏSAS QAYDALAR:
+1. Cavabları HƏMİŞƏ səlis, təbii və axıcı Azərbaycan dilində ver. Şəkilçiləri və grammatikanı dürüst tətbiq et.
+2. "KINOFLIX-ə xoş gəldiniz!" ifadəsini yalnız istifadəçi ilk dəfə "Salam" dedikdə işlət. Növbəti suallarda təkrar etmə.
+3. Brendin adı "KINOFLIX"-dir. Yönlük halında "KINOFLIX-ə" yaz.
+4. İstifadəçiyə nəzakətlə "Siz" deyə müraciət et.`
+                        }
+                    ]
+                },
+                contents: [
                     {
                         role: "user",
-                        content: userText
+                        parts: [{ text: userText }]
                     }
                 ]
             })
         });
 
-        const rawText = await response.text();
+        const data = await response.json();
 
         if (!response.ok) {
-            console.error(`OpenRouter API Xətası [Status ${response.status}]:`, rawText);
+            console.error(`Gemini API Xətası [Status ${response.status}]:`, JSON.stringify(data));
             return res.json({ 
-                reply: `OpenRouter Xətası (${response.status}): ${rawText}` 
+                reply: `Gemini Xətası (${response.status}): ${data.error?.message || "Xəta baş verdi"}` 
             });
         }
 
-        const data = JSON.parse(rawText);
-
-        if (data.choices && data.choices.length > 0 && data.choices[0].message) {
-            return res.json({ reply: data.choices[0].message.content });
+        if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
+            const aiReply = data.candidates[0].content.parts[0].text;
+            return res.json({ reply: aiReply });
         } else {
             return res.json({ reply: "Sistem hazırda cavab hazırlaya bilmədi." });
         }

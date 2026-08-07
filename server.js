@@ -38,7 +38,7 @@ app.post('/api/chat', async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.1-8b-instant", // Ən sürətli pulsuz model
+                model: "llama-3.3-70b-versatile", // Ən sürətli pulsuz model
                 messages: [
     {
         role: "system",

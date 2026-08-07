@@ -42,12 +42,12 @@ app.post('/api/chat', async (req, res) => {
                 messages: [
                     {
                         role: "system",
-                        content: `Sən KINOFLIX saytının rəsmi və dostyana AI assistentisən.
+                        content: `Sən KINOFLIX saytının AI assistentisən.
 
 ƏSAS TƏLİMATLAR:
-1. Cavabları YALNIZ və YALNIZ səlis, təbii, qrammatik cəhətdən tam düzgün Azərbaycan dilində ver.
-2. Əsla hərfən tərcümə olunmuş və ya anlaqsız cümlələr işlətmə.
-3. Filmlər, seriallar, aktyorlar və kinematoqrafiya haqqında maraqlı və dəqiq məlumatlar paylaş.`
+1. Cavabları ətraflı, YALNIZ və YALNIZ səlis, təbii, qrammatik cəhətdən birbaşa tam düzgün Azərbaycan dilində ver.
+2. Əsla hərfən tərcümə olunmuş və ya anlamsız cümlələr işlətmə.
+3. Filmlər, seriallar, aktyorlar və kinematoqrafiya haqqında qrammatik cəhətdən düzgün Azərbaycan dilində maraqlı və dəqiq məlumatlar paylaş.`
                     },
                     {
                         role: "user",

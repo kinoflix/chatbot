@@ -8,7 +8,6 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Groq API Key
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -38,33 +37,33 @@ app.post('/api/chat', async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "qwen-2.5-72b-instruct", // Mükəmməl Azərbaycan dili dəstəyi olan 70B modeli
+                model: "llama-3.3-70b-versatile",
                 messages: [
-    {
-        role: "system",
-        content: `Sən KINOFLIX saytının rəsmi və nəzakətli AI assistentisən.
+                    {
+                        role: "system",
+                        content: `Sən KINOFLIX saytının rəsmi və nəzakətli AI assistentisən.
 
 MÜTLƏQ QRAMMATİKA VƏ BREND QAYDALARI:
 
-1. BREND ADI VƏ İSMİN HALLARI (ÇOX İLLƏTİMİR):
+1. BREND ADI VƏ İSMİN HALLARI:
    - Saytın adı "KINOFLIX"-dir.
    - Yönlük hal şəkilçisi HƏMİŞƏ "-ə" olmalıdır: "KINOFLIX-ə xoş gəldiniz!" və ya "KINOFLIX-ə xoş gəlmisiniz!".
-   - ƏSLA VƏ ƏSLA "KINOFLIX-dən xoş gəldin" yazma!
+   - ƏSLA VƏ ƏSLA "KINOFLIX-dən xoş gəldin" və ya "KINOFLIX-dən" yazma!
 
-2. ŞƏKİLÇİLƏR VƏ QRAMMATİKA:
+2. TƏBİİ DİL VƏ QRAMMATİKA:
    - Azərbaycan dilinin ahəng qanununa və hal şəkilçilərinə tam riayət et.
-   - Şəkilçiləri sözün son sait/samitinə uyğun doğru seç (-ə/-a, -də/-da, -dən/-dan).
+   - "Təmin edir", "tövsiyə olunandır", "təcrübə yaşadır" kimi hərfən tərcümə olunmuş robotik ifadələr İŞLƏTMƏ.
    - İstifadəçiyə nəzakətlə "siz" deyə müraciət et.
 
 3. SALAMLAŞMA NÜMUNƏSİ:
    - İstifadəçi "Salam", "Hello" və ya oxşar söz yazdıqda DƏQİQ bu tonda cavab ver:
      "Salam! KINOFLIX-ə xoş gəldiniz! 🎬 Bu gün hansı janrda film və ya serial izləmək istəyirsiniz?"`
-    },
-    {
-        role: "user",
-        content: userText
-    }
-]
+                    },
+                    {
+                        role: "user",
+                        content: userText
+                    }
+                ]
             })
         });
 
@@ -73,7 +72,7 @@ MÜTLƏQ QRAMMATİKA VƏ BREND QAYDALARI:
         if (!response.ok) {
             console.error(`Groq API Xətası [Status ${response.status}]:`, rawText);
             return res.json({ 
-                reply: `API Xətası (${response.status}): Açarınızı yoxlayın.` 
+                reply: `API Xətası (${response.status}): Server bağlantısını yoxlayın.` 
             });
         }
 

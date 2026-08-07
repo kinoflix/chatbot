@@ -8,7 +8,8 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -21,64 +22,51 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: "Mətn daxil edilməyib." });
     }
 
-    if (!GEMINI_API_KEY) {
-        console.error("XƏTA: GEMINI_API_KEY mühit dəyişəni təyin edilməyib!");
-        return res.json({ 
-            reply: "Server xətası: GEMINI_API_KEY mühit dəyişəni (Environment Variable) tapılmadı." 
-        });
+    if (!GROQ_API_KEY) {
+        return res.json({ reply: "Server xətası: GROQ_API_KEY mühit dəyişəni tapılmadı." });
     }
-
-    // Google Gemini 2.0 Flash rəsmi API endpoint-i
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: {
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                systemInstruction: {
-                    parts: [
-                        {
-                            text: `Sən KINOFLIX saytının rəsmi, nəzakətli və kinoman AI assistentisən.
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    {
+                        role: "system",
+                        content: `Sən KINOFLIX saytının rəsmi və kinoman AI assistentisən.
 
-ƏSAS QAYDALAR:
-1. Cavabları HƏMİŞƏ səlis, təbii və axıcı Azərbaycan dilində ver. Şəkilçiləri və grammatikanı dürüst tətbiq et.
-2. "KINOFLIX-ə xoş gəldiniz!" ifadəsini yalnız istifadəçi ilk dəfə "Salam" dedikdə işlət. Növbəti suallarda təkrar etmə.
-3. Brendin adı "KINOFLIX"-dir. Yönlük halında "KINOFLIX-ə" yaz.
-4. İstifadəçiyə nəzakətlə "Siz" deyə müraciət et.`
-                        }
-                    ]
-                },
-                contents: [
+QƏTİ VƏ MÜTLƏQ QAYDALAR:
+1. DİL: Azərbaycan dilində səlis, təbii və qrammatik cəhətdən düzgün cavab ver. Şablon, süni tərcümə, "təmin edir", "təcrübə yaşadır" kimi robotik sözlər İSTİFADƏ ETMƏ.
+2. BREND ADI: Saytın adı KINOFLIX-dir. Yönlük halında həmişə "KINOFLIX-ə" yaz (Əsla "KINOFLIX-dən" yazma).
+3. SALAMLAŞMA: "KINOFLIX-ə xoş gəldiniz!" cümləsini YALNIZ istifadəçi ilk dəfə "salam" verəndə işlət. İstifadəçi film, aktyor və ya başqa şey soruşanda bu cümləni TƏKRARLAMA, dərhal suala cavab ver.`
+                    },
                     {
                         role: "user",
-                        parts: [{ text: userText }]
+                        content: userText
                     }
-                ]
+                ],
+                temperature: 0.7,
+                max_tokens: 1024
             })
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            console.error(`Gemini API Xətası [Status ${response.status}]:`, JSON.stringify(data));
-            return res.json({ 
-                reply: `Gemini Xətası (${response.status}): ${data.error?.message || "Xəta baş verdi"}` 
-            });
+            console.error(`Groq Xətası:`, data);
+            return res.json({ reply: `Xəta baş verdi: ${data.error?.message || "Bilinməyən xəta"}` });
         }
 
-        if (data.candidates && data.candidates.length > 0 && data.candidates[0].content?.parts?.[0]?.text) {
-            const aiReply = data.candidates[0].content.parts[0].text;
-            return res.json({ reply: aiReply });
-        } else {
-            return res.json({ reply: "Sistem hazırda cavab hazırlaya bilmədi." });
-        }
+        return res.json({ reply: data.choices[0].message.content });
 
     } catch (error) {
-        console.error("Sistem xətası:", error.message);
-        return res.json({ reply: `Xəta baş verdi: ${error.message}` });
+        console.error("Sistem xətası:", error);
+        return res.json({ reply: `Sistem xətası: ${error.message}` });
     }
 });
 

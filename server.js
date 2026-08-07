@@ -41,7 +41,7 @@ app.post('/api/chat', async (req, res) => {
             },
             body: JSON.stringify({
                 // OpenRouter-də pulsuz və Azərbaycan dilini mükəmməl bilən model:
-                model: "deepseek/deepseek-r1:free",
+                model: "openrouter/free",
                 messages: [
                     {
                         role: "system",

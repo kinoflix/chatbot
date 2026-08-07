@@ -8,6 +8,7 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Groq API (Yüksək limitli, pulsuz və çox sürətli)
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -18,8 +19,8 @@ app.get('/', (req, res) => {
 app.post('/api/chat', async (req, res) => {
     const userText = req.body.text;
 
-    if (!userText || userText.trim() === '') {
-        return res.status(400).json({ error: "Mətn daxil edilməyib." });
+    if (!userText) {
+        return res.status(400).json({ error: "Mətn daxil edilməyib" });
     }
 
     if (!GROQ_API_KEY) {
@@ -37,7 +38,7 @@ app.post('/api/chat', async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "llama-3.3-70b-versatile", // Ən sürətli pulsuz model
                 messages: [
     {
         role: "system",
@@ -61,7 +62,7 @@ app.post('/api/chat', async (req, res) => {
         if (!response.ok) {
             console.error(`Groq API Xətası [Status ${response.status}]:`, rawText);
             return res.json({ 
-                reply: `API Xətası (${response.status}): Server bağlantısını yoxlayın.` 
+                reply: `Groq API xətası (${response.status}): API Açarını yoxlayın.` 
             });
         }
 
@@ -70,7 +71,7 @@ app.post('/api/chat', async (req, res) => {
         if (data.choices && data.choices.length > 0) {
             return res.json({ reply: data.choices[0].message.content });
         } else {
-            return res.json({ reply: "Sistem hazırda cavab hazırlaya bilmədi." });
+            return res.json({ reply: "Sistem cavab hazırlaya bilmədi." });
         }
 
     } catch (error) {

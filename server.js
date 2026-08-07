@@ -8,8 +8,9 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const API_URL = "https://models.inference.ai.azure.com/chat/completions";
+// Groq API (Yüksək limitli, pulsuz və çox sürətli)
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -22,11 +23,10 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: "Mətn daxil edilməyib" });
     }
 
-    // Token yoxlanışı
-    if (!GITHUB_TOKEN) {
-        console.error("XƏTA: GITHUB_TOKEN serverdə təyin edilməyib!");
+    if (!GROQ_API_KEY) {
+        console.error("XƏTA: GROQ_API_KEY mühit dəyişəni təyin edilməyib!");
         return res.json({ 
-            reply: "Server xətası: GITHUB_TOKEN tapılmadı. Zəhmət olmasa hosting/terminal paneldə tokeni təyin edin." 
+            reply: "Server xətası: GROQ_API_KEY mühit dəyişəni tapılmadı." 
         });
     }
 
@@ -34,11 +34,11 @@ app.post('/api/chat', async (req, res) => {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${GITHUB_TOKEN}`,
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "gpt-4o-mini",
+                model: "llama-3.1-8b-instant", // Ən sürətli pulsuz model
                 messages: [
                     {
                         role: "system",
@@ -52,31 +52,21 @@ app.post('/api/chat', async (req, res) => {
             })
         });
 
-        // 1. Düzgün JSON parse üçün əvvəlcə mətni oxuyuruq
         const rawText = await response.text();
 
-        // 2. HTTP Status 200 deyilsə (401, 403, 429 və s.), konsola dəqiq səbəbi yazırıq
         if (!response.ok) {
-            console.error(`GitHub API Xətası [Status ${response.status}]:`, rawText);
+            console.error(`Groq API Xətası [Status ${response.status}]:`, rawText);
             return res.json({ 
-                reply: `GitHub API xətası (${response.status}): Tokeniniz səhvdir, vaxtı bitib və ya limit dolub.` 
+                reply: `Groq API xətası (${response.status}): API Açarını yoxlayın.` 
             });
         }
 
-        // 3. Cavab boşdursa çəkmənin qarşısını alırıq
-        if (!rawText) {
-            console.error("GitHub API-dən boş cavab gəldi.");
-            return res.json({ reply: "API-dən boş cavab gəldi." });
-        }
-
-        // 4. Təhlükəsiz şəkildə JSON parse edirik
         const data = JSON.parse(rawText);
 
         if (data.choices && data.choices.length > 0) {
-            const aiResponse = data.choices[0].message.content;
-            return res.json({ reply: aiResponse });
+            return res.json({ reply: data.choices[0].message.content });
         } else {
-            return res.json({ reply: "Sistem hazırda cavab hazırlaya bilmədi." });
+            return res.json({ reply: "Sistem cavab hazırlaya bilmədi." });
         }
 
     } catch (error) {

@@ -3,68 +3,94 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
+
+// Middleware tənzimləmələri
 app.use(cors());
 app.use(express.json());
 
+// Statik faylları (Frontend - index.html, css, js) təqdim etmək üçün
 app.use(express.static(path.join(__dirname, 'public')));
 
-// DeepSeek API tənzimləməsi
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
-const API_URL = "https://api.deepseek.com/chat/completions";
+// Google Gemini API Açarını mühit dəyişənindən oxuyuruq
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+// Əsas səhifə yönləndirməsi
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// AI Chat API Endpoint
 app.post('/api/chat', async (req, res) => {
     const userText = req.body.text;
 
-    if (!userText) {
-        return res.status(400).json({ error: "Mətn daxil edilməyib" });
+    // Daxil edilən mətni yoxlayırıq
+    if (!userText || userText.trim() === '') {
+        return res.status(400).json({ error: "Mətn daxil edilməyib." });
     }
 
-    if (!DEEPSEEK_API_KEY) {
-        console.error("XƏTA: DEEPSEEK_API_KEY mühit dəyişəni təyin edilməyib!");
+    // API Key yoxlanışı
+    if (!GEMINI_API_KEY) {
+        console.error("XƏTA: GEMINI_API_KEY mühit dəyişəni təyin edilməyib!");
         return res.json({ 
-            reply: "Server xətası: DEEPSEEK_API_KEY mühit dəyişəni tapılmadı." 
+            reply: "Server xətası: GEMINI_API_KEY mühit dəyişəni tapılmadı. Zəhmət olmasa hosting panelində əlavə edin." 
         });
     }
+
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     try {
         const response = await fetch(API_URL, {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "deepseek-chat", // DeepSeek-V3 modeli
-                messages: [
-                    {
-                        role: "system",
-                        content: "Sən KINOFLIX saytının rəsmi və dostyana AI assistentisən. Filmlər və seriallar haqqında səmimi, səlis və qrammatik cəhətdən tam düzgün Azərbaycan dilində cavablar ver."
-                    },
+                systemInstruction: {
+                    parts: [
+                        {
+                            text: `Sən KINOFLIX saytının rəsmi və dostyana AI assistentisən.
+
+ƏSAS TƏLİMATLAR:
+1. Cavabları YALNIZ və YALNIZ səlis, təbii, qrammatik cəhətdən tam düzgün Azərbaycan dilində ver.
+2. Əsla hərfən tərcümə olunmuş, lüğəti pozulmuş və ya anlaqsız cümlələr işlətmə.
+3. Filmlər, seriallar, aktyorlar və kinematoqrafiya haqqında maraqlı, dəqiq və səmimi məlumatlar paylaş.
+4. Qısa, aydın və oxunaqlı cümlələrdən istifadə et.`
+                        }
+                    ]
+                },
+                contents: [
                     {
                         role: "user",
-                        content: userText
+                        parts: [
+                            { text: userText }
+                        ]
                     }
                 ]
             })
         });
 
+        // Cavab gövdəsini mətn kimi oxuyuruq
         const rawText = await response.text();
 
         if (!response.ok) {
-            console.error(`DeepSeek API Xətası [Status ${response.status}]:`, rawText);
+            console.error(`Gemini API Xətası [Status ${response.status}]:`, rawText);
             return res.json({ 
-                reply: `DeepSeek API xətası (${response.status}): API Açarını yoxlayın.` 
+                reply: `Gemini API xətası (${response.status}): API Açarınızı və ya limitləri yoxlayın.` 
             });
         }
 
         const data = JSON.parse(rawText);
 
-        if (data.choices && data.choices.length > 0) {
-            return res.json({ reply: data.choices[0].message.content });
+        // Cavab strukturunun doğruluğunu yoxlayırıq
+        if (
+            data.candidates && 
+            data.candidates.length > 0 && 
+            data.candidates[0].content && 
+            data.candidates[0].content.parts && 
+            data.candidates[0].content.parts.length > 0
+        ) {
+            const aiReply = data.candidates[0].content.parts[0].text;
+            return res.json({ reply: aiReply });
         } else {
             return res.json({ reply: "Sistem hazırda cavab hazırlaya bilmədi." });
         }
@@ -75,5 +101,6 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+// Serveri işə salırıq
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server ${PORT} portunda aktivdir.`));

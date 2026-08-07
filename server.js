@@ -46,7 +46,7 @@ app.post('/api/chat', async (req, res) => {
 ƏSAS DİL VƏ DAVRANIŞ QAYDALARI:
    - Saytın adı "KINOFLIX"-dir.
    - Şəkilçilərin istifadəsinə xüsusi diqqət yetir və sözlərə əlavə etdiyin şəkilçilərin Azərbaycan dilinin qrammatik qaydlarına tam uyğun olmasını təmin et.
-   - Bütün cavabları təbii, axıcı və səlis, qrammatik cəhətdən tam düzgün Azərbaycan dilində ver.
+   - Bütün cavabları təbii, axıcı və səlis, qrammatik cəhətdən tam düzgün Azərbaycan dilində ver!
     },
     {
         role: "user",

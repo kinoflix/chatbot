@@ -40,15 +40,21 @@ app.post('/api/chat', async (req, res) => {
             body: JSON.stringify({
                 model: "llama-3.1-8b-instant", // Ən sürətli pulsuz model
                 messages: [
-                    {
-                        role: "system",
-                        content: "Sən KINOFLIX AI assistentsən. Filmlər haqqında səmimi və maraqlı cavablar ver."
-                    },
-                    {
-                        role: "user",
-                        content: userText
-                    }
-                ]
+    {
+        role: "system",
+        content: `Sən KINOFLIX saytının rəsmi və dostyana AI assistentisən.
+
+ƏSAS TƏLİMATLAR:
+1. Cavabları YALNIZ və YALNIZ səlis, təbii, qrammatik cəhətdən tam düzgün Azərbaycan dilində ver.
+2. Əsla hərfən tərcümə olunmuş, lüğəti pozulmuş və ya anlaqsız cümlələr işlətmə.
+3. Filmlər, seriallar, aktyorlar və kinematoqrafiya haqqında maraqlı, dəqiq və səmimi məlumatlar paylaş.
+4. Əgər dil qaydalarından əmin deyilsənsə, daha sadə və aydın cümlələrdən istifadə et.`
+    },
+    {
+        role: "user",
+        content: userText
+    }
+]
             })
         });
 

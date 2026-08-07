@@ -41,7 +41,7 @@ app.post('/api/chat', async (req, res) => {
             },
             body: JSON.stringify({
                 // OpenRouter-də pulsuz və Azərbaycan dilini mükəmməl bilən model:
-                model: "google/gemini-2.0-flash-exp:free",
+                model: "qwen/qwen-2.5-72b-instruct:free",
                 messages: [
                     {
                         role: "system",

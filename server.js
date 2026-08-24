@@ -8,24 +8,52 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
-const API_URL = "https://api.cerebras.ai/v1/chat/completions";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// 24 Avqust 2026 tarixinə Cerebras-da aktiv olan modellərin siyahısı
-// Sistem sırayla bu modelləri yoxlayacaq. Birinci xəta versə, ikincini işə salacaq.
-const ACTIVE_MODELS = [
-    // 1. Cerebras-ın ən sabit, sürətli və gündəlik limiti geniş olan modeli
-    "llama3.1-8b",
+// Anlıq aktiv modeli yaddaşda saxlamaq üçün keş (cache)
+let cachedModel = null;
+let lastModelCheckTime = 0;
 
-    // 2. Daha güclü, "versatile"-a ən yaxın alternativ (bəzi hesablarda deprecation planına düşə bilər)
-    "llama-3.3-70b",
+// Groq-dan anlıq olaraq ƏN YENİ VƏ AKTİV modeli avtomatik tapır
+async function getDynamicActiveModel() {
+    // 1 saat ərzində model tapılıbsa, Groq-a təkrar modellər sorğusu göndərmir
+    if (cachedModel && (Date.now() - lastModelCheckTime < 60 * 60 * 1000)) {
+        return cachedModel;
+    }
 
-    // 3. Ehtiyat model - Llama 4 Scout
-    "llama-4-scout-17b-16e-instruct",
+    try {
+        console.log("Groq bazasından anlıq aktiv modellər siyahısı alınır...");
+        const response = await fetch("https://api.groq.com/openai/v1/models", {
+            headers: { "Authorization": `Bearer ${GROQ_API_KEY}` }
+        });
 
-    // 4. Son ehtiyat - Qwen 3 32B
-    "qwen-3-32b"
-];
+        const data = await response.json();
+
+        if (data && data.data && data.data.length > 0) {
+            // Səs və ya vizual modelləri çıxarırıq, yalnız mətn/çat modellərini süzürük
+            const chatModels = data.data.filter(m => 
+                !m.id.includes("whisper") && 
+                !m.id.includes("vision") && 
+                !m.id.includes("safetensors")
+            );
+
+            if (chatModels.length > 0) {
+                // Azərbaycan dili üçün Llama, Gemma və ya siyahıdakı birinci aktiv modeli avtomatik seçir
+                const preferredModel = chatModels.find(m => m.id.includes("llama") || m.id.includes("gemma")) || chatModels[0];
+                
+                cachedModel = preferredModel.id;
+                lastModelCheckTime = Date.now();
+                console.log(`[AVTOMATİK TƏYİN OLUNDU]: İşlək model -> ${cachedModel}`);
+                return cachedModel;
+            }
+        }
+    } catch (error) {
+        console.error("Aktiv model siyahısını alarkən xəta:", error.message);
+    }
+
+    // Əgər siyahı alınmazsa, ehtiyat standart ID
+    return cachedModel || "llama-3.1-8b-instant";
+}
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -38,75 +66,58 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: "Mətn daxil edilməyib." });
     }
 
-    if (!CEREBRAS_API_KEY) {
-        return res.json({ reply: "Server xətası: CEREBRAS_API_KEY mühit dəyişəni tapılmadı." });
+    if (!GROQ_API_KEY) {
+        return res.json({ reply: "Server xətası: GROQ_API_KEY mühit dəyişəni tapılmadı." });
     }
 
-    const systemInstruction = `Sən KINOFLIX saytının rəsmi və kinoman AI assistentisən.
+    try {
+        // Groq-dan anlıq 100% aktiv olan modelin ID-sini dinamik olaraq alırıq
+        const activeModel = await getDynamicActiveModel();
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: activeModel,
+                messages: [
+                    {
+                        role: "system",
+                        content: `Sən KINOFLIX saytının rəsmi və kinoman AI assistentisən.
 
 QƏTİ VƏ MÜTLƏQ QAYDALAR:
-1. DİL: Azərbaycan dilində səlis, təbii və qrammatik cəhətdən düzgün cavab ver. Şablon və robotik ifadələr işlətmə.
+1. DİL: Azərbaycan dilində səlis, təbii və qrammatik cəhətdən düzgün cavab ver.
 2. BREND ADI: Saytın adı KINOFLIX-dir. Yönlük halında həmişə "KINOFLIX-ə" yaz (Əsla "KINOFLIX-dən" yazma).
-3. SALAMLAŞMA: "KINOFLIX-ə xoş gəldiniz!" cümləsini YALNIZ istifadəçi ilk dəfə "salam" verəndə işlət. Başqa hallarda təkrarlama.`;
-
-    let aiResponse = null;
-    let lastError = null;
-
-    // Fallback mexanizmi: Bütün modelləri sırayla yoxlayır
-    for (const currentModel of ACTIVE_MODELS) {
-        try {
-            console.log(`Cerebras API-yə ${currentModel} modeli ilə sorğu göndərilir...`);
-
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${CEREBRAS_API_KEY}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: currentModel,
-                    messages: [
-                        { role: "system", content: systemInstruction },
-                        { role: "user", content: userText }
-                    ],
-                    temperature: 0.6, // Azərbaycan dilində daha məntiqli və stabil cavablar üçün 0.6 idealdır
-                    max_tokens: 1024,
-                    top_p: 0.9
-                })
-            });
-
-            const data = await response.json();
-
-            // Əgər model ləğv edilibsə (404) və ya başqa xəta varsa, növbəti modelə keç
-            if (!response.ok) {
-                console.warn(`XƏBƏRDARLIQ: ${currentModel} işləmədi. Xəta: ${data.error?.message}`);
-                lastError = data.error?.message;
-                continue; // Dövrü davam etdir, növbəti modeli sınasın
-            }
-
-            // Cavab uğurla alındısa, nəticəni yadda saxla və dövrdən çıx
-            if (data.choices && data.choices.length > 0) {
-                aiResponse = data.choices[0].message.content;
-                break;
-            }
-
-        } catch (error) {
-            console.warn(`Sistem xətası (${currentModel}):`, error.message);
-            lastError = error.message;
-            continue;
-        }
-    }
-
-    // Əgər heç bir model işləmədisə
-    if (!aiResponse) {
-        console.error("KRİTİK XƏTA: Bütün modellər sıradan çıxıb. Son xəta:", lastError);
-        return res.json({
-            reply: `Bağışlayın, hazırda KINOFLIX AI sistemində yenilənmə gedir. (Texniki xəta: ${lastError || "Bilinməyən xəta"})`
+3. SALAMLAŞMA: "KINOFLIX-ə xoş gəldiniz!" cümləsini YALNIZ istifadəçi ilk dəfə "salam" verəndə işlət.`
+                    },
+                    {
+                        role: "user",
+                        content: userText
+                    }
+                ],
+                temperature: 0.6,
+                max_tokens: 1024
+            })
         });
-    }
 
-    // Uğurlu cavabı istifadəçiyə qaytar
-    return res.json({ reply: aiResponse });
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error(`Groq API Xətası:`, data);
+            // Model dəyişibsə keş-i sıfırla ki, növbəti sorğuda yenidən avtomatik axtarsın
+            cachedModel = null; 
+            return res.json({ reply: `Xəta baş verdi: ${data.error?.message || "Bilinməyən xəta"}` });
+        }
+
+        return res.json({ reply: data.choices[0].message.content });
+
+    } catch (error) {
+        console.error("Sistem xətası:", error);
+        cachedModel = null;
+        return res.json({ reply: `Sistem xətası: ${error.message}` });
+    }
 });
 
 const PORT = process.env.PORT || 10000;

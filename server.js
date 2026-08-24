@@ -8,20 +8,23 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const CEREBRAS_API_KEY = process.env.CEREBRAS_API_KEY;
+const API_URL = "https://api.cerebras.ai/v1/chat/completions";
 
-// 24 Avqust 2026 tarixinə ən stabil və aktiv modellərin siyahısı
+// 24 Avqust 2026 tarixinə Cerebras-da aktiv olan modellərin siyahısı
 // Sistem sırayla bu modelləri yoxlayacaq. Birinci xəta versə, ikincini işə salacaq.
 const ACTIVE_MODELS = [
-    // 1. Google-un ən son Gemma 2 modeli (KINOFLIX üçün ən yaxşı Azərbaycan dili)
-    "gemma2-9b-it",
-    
-    // 2. Meta-nın qəti olaraq bazada saxladığı əsas 8B Llama 3.1
-    "llama-3.1-8b-instant",
-    
-    // 3. Əgər yuxarıdakılar nədənsə xəta versə, köhnə amma standart Llama 3
-    "llama3-8b-8192" 
+    // 1. Cerebras-ın ən sabit, sürətli və gündəlik limiti geniş olan modeli
+    "llama3.1-8b",
+
+    // 2. Daha güclü, "versatile"-a ən yaxın alternativ (bəzi hesablarda deprecation planına düşə bilər)
+    "llama-3.3-70b",
+
+    // 3. Ehtiyat model - Llama 4 Scout
+    "llama-4-scout-17b-16e-instruct",
+
+    // 4. Son ehtiyat - Qwen 3 32B
+    "qwen-3-32b"
 ];
 
 app.get('/', (req, res) => {
@@ -35,8 +38,8 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: "Mətn daxil edilməyib." });
     }
 
-    if (!GROQ_API_KEY) {
-        return res.json({ reply: "Server xətası: GROQ_API_KEY mühit dəyişəni tapılmadı." });
+    if (!CEREBRAS_API_KEY) {
+        return res.json({ reply: "Server xətası: CEREBRAS_API_KEY mühit dəyişəni tapılmadı." });
     }
 
     const systemInstruction = `Sən KINOFLIX saytının rəsmi və kinoman AI assistentisən.
@@ -52,12 +55,12 @@ QƏTİ VƏ MÜTLƏQ QAYDALAR:
     // Fallback mexanizmi: Bütün modelləri sırayla yoxlayır
     for (const currentModel of ACTIVE_MODELS) {
         try {
-            console.log(`Groq API-yə ${currentModel} modeli ilə sorğu göndərilir...`);
-            
+            console.log(`Cerebras API-yə ${currentModel} modeli ilə sorğu göndərilir...`);
+
             const response = await fetch(API_URL, {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${GROQ_API_KEY}`,
+                    "Authorization": `Bearer ${CEREBRAS_API_KEY}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
@@ -84,7 +87,7 @@ QƏTİ VƏ MÜTLƏQ QAYDALAR:
             // Cavab uğurla alındısa, nəticəni yadda saxla və dövrdən çıx
             if (data.choices && data.choices.length > 0) {
                 aiResponse = data.choices[0].message.content;
-                break; 
+                break;
             }
 
         } catch (error) {
@@ -97,8 +100,8 @@ QƏTİ VƏ MÜTLƏQ QAYDALAR:
     // Əgər heç bir model işləmədisə
     if (!aiResponse) {
         console.error("KRİTİK XƏTA: Bütün modellər sıradan çıxıb. Son xəta:", lastError);
-        return res.json({ 
-            reply: `Bağışlayın, hazırda KINOFLIX AI sistemində yenilənmə gedir. (Texniki xəta: ${lastError || "Bilinməyən xəta"})` 
+        return res.json({
+            reply: `Bağışlayın, hazırda KINOFLIX AI sistemində yenilənmə gedir. (Texniki xəta: ${lastError || "Bilinməyən xəta"})`
         });
     }
 

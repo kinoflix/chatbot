@@ -14,9 +14,14 @@ const API_URL = "https://api.groq.com/openai/v1/chat/completions";
 // 24 Avqust 2026 tarixinə ən stabil və aktiv modellərin siyahısı
 // Sistem sırayla bu modelləri yoxlayacaq. Birinci xəta versə, ikincini işə salacaq.
 const ACTIVE_MODELS = [
+    // 1. Google-un ən son Gemma 2 modeli (KINOFLIX üçün ən yaxşı Azərbaycan dili)
     "gemma2-9b-it",
+    
+    // 2. Meta-nın qəti olaraq bazada saxladığı əsas 8B Llama 3.1
     "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768"
+    
+    // 3. Əgər yuxarıdakılar nədənsə xəta versə, köhnə amma standart Llama 3
+    "llama3-8b-8192" 
 ];
 
 app.get('/', (req, res) => {
